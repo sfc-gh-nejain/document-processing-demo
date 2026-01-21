@@ -11,70 +11,41 @@ def rerun_app():
     else:
         st.experimental_rerun()
 
-# PDF rendering libraries
-PDF_RENDERER = None
+# PDF rendering library (pdf2image with poppler)
+PDF_RENDERING_AVAILABLE = False
 try:
     from pdf2image import convert_from_bytes
-    PDF_RENDERER = "pdf2image"
+    PDF_RENDERING_AVAILABLE = True
 except ImportError:
-    try:
-        import fitz  # PyMuPDF
-        PDF_RENDERER = "pymupdf"
-    except ImportError:
-        PDF_RENDERER = None
-PDF_RENDERING_AVAILABLE = PDF_RENDERER is not None
+    pass
 
 session = get_active_session()
 
 st.set_page_config(layout="wide", page_title="Document Processing using Cortex")
 
 def convert_pdf_to_images(pdf_bytes, dpi=150):
-    """Convert PDF bytes to list of PNG images using pdf2image or PyMuPDF."""
+    """Convert PDF bytes to list of PNG images using pdf2image."""
     if not PDF_RENDERING_AVAILABLE:
         return None
     
     try:
         images = []
         
-        if PDF_RENDERER == "pdf2image":
-            # Use pdf2image (requires poppler)
-            pil_images = convert_from_bytes(pdf_bytes, dpi=dpi)
-            
-            for page_num, pil_image in enumerate(pil_images):
-                # Convert PIL image to PNG bytes
-                img_buffer = io.BytesIO()
-                pil_image.save(img_buffer, format='PNG')
-                img_bytes = img_buffer.getvalue()
-                
-                images.append({
-                    'page': page_num + 1,
-                    'data': img_bytes,
-                    'width': pil_image.width,
-                    'height': pil_image.height
-                })
+        # Use pdf2image (requires poppler)
+        pil_images = convert_from_bytes(pdf_bytes, dpi=dpi)
         
-        elif PDF_RENDERER == "pymupdf":
-            # Use PyMuPDF (fitz)
-            import fitz
-            pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+        for page_num, pil_image in enumerate(pil_images):
+            # Convert PIL image to PNG bytes
+            img_buffer = io.BytesIO()
+            pil_image.save(img_buffer, format='PNG')
+            img_bytes = img_buffer.getvalue()
             
-            for page_num in range(len(pdf_document)):
-                page = pdf_document[page_num]
-                # Render page to pixmap (image)
-                zoom = dpi / 72
-                matrix = fitz.Matrix(zoom, zoom)
-                pixmap = page.get_pixmap(matrix=matrix)
-                
-                # Convert to PNG bytes
-                img_bytes = pixmap.tobytes("png")
-                images.append({
-                    'page': page_num + 1,
-                    'data': img_bytes,
-                    'width': pixmap.width,
-                    'height': pixmap.height
-                })
-            
-            pdf_document.close()
+            images.append({
+                'page': page_num + 1,
+                'data': img_bytes,
+                'width': pil_image.width,
+                'height': pil_image.height
+            })
         
         return images
     except Exception as e:
@@ -141,7 +112,7 @@ def display_pdf_viewer(pdf_bytes, filename):
             show_download_fallback(pdf_bytes, filename, file_size_kb, "PDF rendering failed.")
     else:
         # No PDF rendering library available
-        show_download_fallback(pdf_bytes, filename, file_size_kb, "PDF rendering library not available. Add 'pdf2image' or 'pymupdf' to your packages.")
+        show_download_fallback(pdf_bytes, filename, file_size_kb, "PDF rendering library not available. Add 'pdf2image' and 'poppler' to environment.yml.")
 
 
 def show_download_fallback(pdf_bytes, filename, file_size_kb, reason):

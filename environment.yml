@@ -1,0 +1,7 @@
+name: streamlit_app
+channels:
+  - snowflake
+dependencies:
+  - pandas
+  - pdf2image
+  - poppler

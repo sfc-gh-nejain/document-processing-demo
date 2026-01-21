@@ -63,16 +63,18 @@ CREATE TABLE IF NOT EXISTS DATABASE.SCHEMA.EXTRACTION_MODELS (
 );
 ```
 
-### Step 4: Upload the App File
+### Step 4: Upload the App Files
 
-1. Download `app.py` from this repository
+1. Download `app.py` and `environment.yml` from this repository
 2. **Important**: Before uploading, edit `app.py` and update these references to match your database and schema:
    - Line 182: Change `DATABASE.SCHEMA.USER_PREFERENCES` to your table path
    - Line 202: Change `DATABASE.SCHEMA.USER_PREFERENCES` to your table path  
    - Line 224: Change `DATABASE.SCHEMA.EXTRACTION_MODELS` to your table path
 3. Navigate to **Data** → **Databases** → Your Database → Your Schema → **Stages** → `STREAMLIT_STAGE`
 4. Click **+ Files** button in the top right
-5. Select and upload your modified `app.py` file
+5. Select and upload both files: `app.py` and `environment.yml`
+
+> **Note**: The `environment.yml` file automatically installs `pdf2image` and `poppler` packages, enabling PDF preview functionality.
 
 ### Step 5: Create the Streamlit App
 
