@@ -10,44 +10,37 @@ A Streamlit application for intelligent document processing using Snowflake Cort
   - **Entity Extraction**: Extract specific fields (e.g., name, date, amount)
   - **List Extraction**: Extract lists of items from documents
   - **Table Extraction**: Extract tabular data with custom column definitions
-- **Model Management**: Save and load extraction configurations for reuse
+- **Fine-tuning**: Train custom arctic-extract models on your specific document types
+- **Model Evaluation**: Calculate Accuracy, Precision, Recall, and F1 scores
 - **User Preferences**: Automatically saves your last-used database/schema/stage
 
 ## Prerequisites
 
 - Snowflake account with Cortex AI enabled
-- Python 3.8 or higher
 - Access to Snowflake stages with documents to process
 
-## Setup
+## Setup Using Snowsight UI
 
-### 1. Clone the Repository
+Follow these steps to deploy the app entirely through the Snowsight web interface (no CLI required).
 
-```bash
-git clone https://github.com/YOUR_USERNAME/document-processing-demo.git
-cd document-processing-demo
-```
+### Step 1: Create a Database and Schema
 
-### 2. Install Dependencies
+1. Log in to [Snowsight](https://app.snowflake.com)
+2. Navigate to **Data** → **Databases**
+3. Click **+ Database** and create a new database (e.g., `DOC_PROCESSING`)
+4. Click on your new database, then click **+ Schema** to create a schema (e.g., `APP`)
 
-```bash
-pip install -r requirements.txt
-```
+### Step 2: Create a Stage for the App
 
-### 3. Configure Snowflake Connection
+1. Navigate to **Data** → **Databases** → Your Database → Your Schema
+2. Click **Create** → **Stage** → **Snowflake Managed**
+3. Name it `STREAMLIT_STAGE`
+4. Click **Create**
 
-This app uses Snowflake Snowpark session. You need to configure your Snowflake connection before running the app.
+### Step 3: Create Required Tables
 
-Create a connection using Snowflake CLI:
-```bash
-snow connection add
-```
-
-Or configure it in your Snowflake config file (`~/.snowflake/connections.toml`).
-
-### 4. Create Required Database Objects
-
-The app requires these tables to store preferences and models:
+1. Navigate to **Worksheets** and create a new SQL worksheet
+2. Run the following SQL (replace `DATABASE.SCHEMA` with your database and schema names):
 
 ```sql
 -- User preferences table
@@ -70,43 +63,58 @@ CREATE TABLE IF NOT EXISTS DATABASE.SCHEMA.EXTRACTION_MODELS (
 );
 ```
 
-**Note**: Update the database and schema names in the SQL and in `app.py` (lines 182, 202, 224) to match your environment.
+### Step 4: Upload the App File
 
-## Running the App
+1. Download `app.py` from this repository
+2. **Important**: Before uploading, edit `app.py` and update these references to match your database and schema:
+   - Line 182: Change `DATABASE.SCHEMA.USER_PREFERENCES` to your table path
+   - Line 202: Change `DATABASE.SCHEMA.USER_PREFERENCES` to your table path  
+   - Line 224: Change `DATABASE.SCHEMA.EXTRACTION_MODELS` to your table path
+3. Navigate to **Data** → **Databases** → Your Database → Your Schema → **Stages** → `STREAMLIT_STAGE`
+4. Click **+ Files** button in the top right
+5. Select and upload your modified `app.py` file
 
-### Local Development
+### Step 5: Create the Streamlit App
 
-```bash
-streamlit run app.py
-```
+1. Navigate to **Streamlit** in the left sidebar
+2. Click **+ Streamlit App**
+3. Configure the app:
+   - **App name**: `Document_Processing_Demo`
+   - **App location**: Select your database and schema
+   - **App warehouse**: Select a warehouse (e.g., `COMPUTE_WH`)
+   - **Stage location**: Select `STREAMLIT_STAGE`
+   - **Main file**: `app.py`
+4. Click **Create**
 
-The app will open in your browser at `http://localhost:8501`
+### Step 6: Create a Stage for Documents (Optional)
 
-### Deploy to Snowflake (Streamlit in Snowflake)
+To store documents for processing:
 
-1. Upload the app to a Snowflake stage:
-```sql
-PUT file://app.py @your_stage AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
-```
-
-2. Create the Streamlit app:
-```sql
-CREATE STREAMLIT document_processing_app
-  ROOT_LOCATION = '@your_stage'
-  MAIN_FILE = 'app.py'
-  QUERY_WAREHOUSE = your_warehouse;
-```
+1. Navigate to **Data** → **Databases** → Your Database → Your Schema
+2. Click **Create** → **Stage** → **Snowflake Managed**
+3. Name it `DOCUMENTS`
+4. Click **Create**
+5. Upload your PDF, image, or text files to this stage
 
 ## Usage
 
-### 1. Overview Page
-Start here to understand the app's capabilities and supported file types.
+### Navigation
 
-### 2. Extraction Page
+The app has a sidebar with:
+- **Navigation buttons** to switch between pages
+- **Database and Schema dropdowns** that apply globally across all tabs
+
+### Pages
+
+#### 1. Overview
+Introduction to the app's capabilities and supported file types.
+
+#### 2. Extraction
 
 **Select a File:**
-1. Choose Database, Schema, Stage, and File from the dropdowns
-2. The file preview appears in the left panel
+1. Choose Database and Schema from the sidebar
+2. Select Stage and File from the dropdowns
+3. The file preview appears in the left panel
 
 **Define Extractions:**
 - Click **Add Entity** to extract single values (name, date, etc.)
@@ -117,16 +125,41 @@ Start here to understand the app's capabilities and supported file types.
 - Click **Extract** for individual extractions
 - Click **Extract All** to run all configured extractions at once
 
-**Save Your Work:**
-- Open the "Model Management" section
-- Enter a model name and version
-- Click "Save Model" to reuse this configuration later
+**Training Mode:**
+- Switch to "Training" mode to save extractions for fine-tuning
+- Results are saved to a training data table
 
-### 3. Processing Page
-Reserved for future batch processing features.
+#### 3. Fine-tuning
 
-### 4. Results Page
-Reserved for viewing and exporting extraction results.
+**Prepare Dataset:**
+- Select a source table with training data
+- Map columns for File, Prompt, and Response
+- Create a Snowflake Dataset for training
+
+**Create Job:**
+- Select a training dataset
+- Specify model name
+- Start the fine-tuning job
+
+**Monitor Jobs:**
+- Check job status using the Fine-tuning Job ID
+- View progress, trained tokens, and training loss
+
+**Test Model:**
+- Select a fine-tuned model
+- Test extraction on sample files
+
+#### 4. Results (Model Evaluation)
+
+**Single File Evaluation:**
+- Compare model prediction against expected output
+- View Accuracy, Precision, Recall, F1 Score
+- See field-by-field comparison
+
+**Batch Evaluation:**
+- Evaluate across multiple files using a ground truth table
+- View overall metrics and per-file results
+- Export results to a Snowflake table
 
 ## Example Use Cases
 
@@ -141,28 +174,25 @@ The app uses:
 - **Streamlit**: Web UI framework
 - **Snowflake Snowpark**: Python library for Snowflake
 - **Cortex AI Extract**: AI-powered document extraction
-- **PDF Rendering**: pdf2image or PyMuPDF for PDF preview
-
-## Configuration
-
-Update these hardcoded references in `app.py` to match your environment:
-- Line 182: `DATABASE.SCHEMA.USER_PREFERENCES`
-- Line 202: `DATABASE.SCHEMA.USER_PREFERENCES`
-- Line 224: `DATABASE.SCHEMA.EXTRACTION_MODELS`
+- **Cortex Fine-tuning**: Custom model training for arctic-extract
 
 ## Troubleshooting
 
-**PDF Preview Not Working:**
-- Install pdf2image: `pip install pdf2image` (requires poppler)
-- Or install PyMuPDF: `pip install PyMuPDF`
+**App Not Loading:**
+- Verify the warehouse is running and has sufficient resources
+- Check that all required tables exist
 
-**Connection Errors:**
-- Verify your Snowflake connection is configured correctly
-- Check that you have the necessary privileges
+**File Preview Not Working:**
+- Ensure the file format is supported (PDF, PNG, JPG, CSV, TXT)
+- Verify the file exists in the specified stage
 
 **Extraction Errors:**
 - Ensure Cortex AI is enabled in your Snowflake account
-- Verify the file exists in the specified stage
+- Verify you have the necessary privileges on the stage
+
+**Fine-tuning Errors:**
+- Ensure you have at least 20 training samples
+- Verify the training data format is correct
 
 ## License
 
