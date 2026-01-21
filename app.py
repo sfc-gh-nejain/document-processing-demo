@@ -407,8 +407,8 @@ with st.sidebar:
         st.session_state['current_page'] = 'Fine-tuning'
         st.rerun()
     
-    if st.button("📊 Results", use_container_width=True, type="primary" if st.session_state['current_page'] == 'Results' else "secondary"):
-        st.session_state['current_page'] = 'Results'
+    if st.button("📊 Model Evaluation", use_container_width=True, type="primary" if st.session_state['current_page'] == 'Model Evaluation' else "secondary"):
+        st.session_state['current_page'] = 'Model Evaluation'
         st.rerun()
     
     st.divider()
@@ -1914,7 +1914,7 @@ elif page == "Fine-tuning":
             else:
                 st.warning("Please provide model path, stage, and file name.")
 
-elif page == "Results":
+elif page == "Model Evaluation":
     col_logo, col_header = st.columns([0.05, 0.95])
     with col_logo:
         st.image("https://logos-world.net/wp-content/uploads/2022/11/Snowflake-Symbol.png", width=50)
