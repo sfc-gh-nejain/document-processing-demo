@@ -3,6 +3,14 @@ import pandas as pd
 from snowflake.snowpark.context import get_active_session
 import io
 
+# Helper function for backward compatibility with older Streamlit versions
+def rerun_app():
+    """Rerun the app - compatible with both old and new Streamlit versions."""
+    if hasattr(st, 'rerun'):
+        st.rerun()
+    else:
+        st.experimental_rerun()
+
 # PDF rendering libraries
 PDF_RENDERER = None
 try:
@@ -397,19 +405,19 @@ with st.sidebar:
     
     if st.button("🏠 Overview", use_container_width=True, type="primary" if st.session_state['current_page'] == 'Overview' else "secondary"):
         st.session_state['current_page'] = 'Overview'
-        st.rerun()
+        rerun_app()
     
     if st.button("📄 Extraction", use_container_width=True, type="primary" if st.session_state['current_page'] == 'Extraction' else "secondary"):
         st.session_state['current_page'] = 'Extraction'
-        st.rerun()
+        rerun_app()
     
     if st.button("🎯 Fine-tuning", use_container_width=True, type="primary" if st.session_state['current_page'] == 'Fine-tuning' else "secondary"):
         st.session_state['current_page'] = 'Fine-tuning'
-        st.rerun()
+        rerun_app()
     
     if st.button("📊 Model Evaluation", use_container_width=True, type="primary" if st.session_state['current_page'] == 'Model Evaluation' else "secondary"):
         st.session_state['current_page'] = 'Model Evaluation'
-        st.rerun()
+        rerun_app()
     
     st.divider()
     st.header("Database Context")
@@ -575,7 +583,7 @@ elif page == "Extraction":
                                 st.session_state['preview_db'] = selected_db
                                 st.session_state['preview_schema'] = selected_schema
                                 st.session_state['preview_stage_name'] = selected_stage
-                                st.rerun()
+                                rerun_app()
                     else:
                         st.info("No files found")
                         
@@ -625,7 +633,7 @@ elif page == "Extraction":
                         
                         if upload_success > 0:
                             st.success(f"✅ Successfully uploaded {upload_success} file(s) to {stage_path}")
-                            st.rerun()
+                            rerun_app()
                         if upload_failed > 0:
                             st.warning(f"⚠️ {upload_failed} file(s) failed to upload")
     
@@ -847,7 +855,7 @@ elif page == "Extraction":
                                 extraction['result'] = f"Error: {str(e)}"
                         
                         st.success("All extractions completed!")
-                        st.rerun()
+                        rerun_app()
             
             st.divider()
             
@@ -895,7 +903,7 @@ elif page == "Extraction":
                                     if len(extraction['fields']) > 1:
                                         if st.button("🗑️", key=f"remove_field_{extraction_id}_{i}", help="Remove this field"):
                                             extraction['fields'].pop(i)
-                                            st.rerun()
+                                            rerun_app()
                                 
                                 # Extraction delete button on first row
                                 if i == 0:
@@ -903,7 +911,7 @@ elif page == "Extraction":
                                         st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
                                         if st.button("❌", key=f"remove_extraction_{extraction_id}", help="Remove this extraction"):
                                             st.session_state['extractions'].pop(idx)
-                                            st.rerun()
+                                            rerun_app()
                             
                             fields_config = {}
                             for field in extraction['fields']:
@@ -1022,7 +1030,7 @@ elif page == "Extraction":
                                     if len(extraction['lists']) > 1:
                                         if st.button("🗑️", key=f"remove_list_{extraction_id}_{i}", help="Remove this list"):
                                             extraction['lists'].pop(i)
-                                            st.rerun()
+                                            rerun_app()
                                 
                                 # Extraction delete button on first row
                                 if i == 0:
@@ -1030,7 +1038,7 @@ elif page == "Extraction":
                                         st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
                                         if st.button("❌", key=f"remove_extraction_list_{extraction_id}", help="Remove this extraction"):
                                             st.session_state['extractions'].pop(idx)
-                                            st.rerun()
+                                            rerun_app()
                             
                             list_questions = []
                             for list_item in extraction['lists']:
@@ -1168,7 +1176,7 @@ elif page == "Extraction":
                                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
                                 if st.button("❌", key=f"remove_extraction_table_{extraction_id}", help="Remove this extraction"):
                                     st.session_state['extractions'].pop(idx)
-                                    st.rerun()
+                                    rerun_app()
                             
                             st.write("**Columns:**")
                             for i, col in enumerate(table_config['columns']):
@@ -1195,11 +1203,11 @@ elif page == "Extraction":
                                     if len(table_config['columns']) > 1:
                                         if st.button("🗑️", key=f"remove_col_{extraction_id}_{i}", help="Remove this column"):
                                             table_config['columns'].pop(i)
-                                            st.rerun()
+                                            rerun_app()
                             
                             if st.button("➕ Add Column", key=f"add_col_{extraction_id}"):
                                 table_config['columns'].append({'name': '', 'description': ''})
-                                st.rerun()
+                                rerun_app()
                             
                             if st.button("Extract", type="primary", key=f"extract_table_{extraction_id}"):
                                 columns_config = [col for col in table_config['columns'] if col['name']]
@@ -1421,7 +1429,7 @@ elif page == "Extraction":
                                     st.success(f"Saved {insert_count} training examples to {full_table_name}")
                                     st.session_state['show_training_table'] = True
                                     st.session_state['training_table_full_name'] = full_table_name
-                                    st.rerun()
+                                    rerun_app()
                                     
                                 except Exception as e:
                                     st.error(f"Error saving training data: {str(e)}")
