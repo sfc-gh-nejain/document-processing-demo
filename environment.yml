@@ -4,4 +4,3 @@ channels:
 dependencies:
   - pandas
   - pdf2image
-  - poppler
